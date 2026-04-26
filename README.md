@@ -1,0 +1,1 @@
+This project is entirely vibe-coded do not use as a reference for me coding abilities for me use Claude to make dis. Tyvm for understanding. 

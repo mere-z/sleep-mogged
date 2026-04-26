@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sleep Mogged</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@900&family=Rajdhani:wght@500;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── REPLACE THESE TWO LINES WITH YOUR SUPABASE CREDENTIALS ── */
+/* See README section below                                      */
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;background:#07071a;color:#f0e6d3;font-family:'DM Sans',sans-serif;}
+#app{min-height:100vh;display:flex;flex-direction:column;}
+.content{max-width:480px;margin:0 auto;padding:2rem 1rem 4rem;width:100%;flex:1;}
+@keyframes twinkle{0%,100%{opacity:1}50%{opacity:0.1}}
+@keyframes swing{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
+@keyframes bIn{0%{opacity:0;transform:scale(0.15) rotate(-5deg)}60%{transform:scale(1.1) rotate(1deg)}80%{transform:scale(0.96)}100%{opacity:1;transform:scale(1)}}
+@keyframes shk{0%,100%{transform:translateX(0)}15%{transform:translateX(-14px)}30%{transform:translateX(14px)}45%{transform:translateX(-9px)}60%{transform:translateX(9px)}75%{transform:translateX(-5px)}90%{transform:translateX(5px)}}
+@keyframes pls{0%,100%{opacity:1}50%{opacity:0.2}}
+@keyframes sUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spn{to{transform:rotate(360deg)}}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.bIn{animation:bIn 0.7s cubic-bezier(0.34,1.56,0.64,1) both}
+.shk{animation:shk 0.65s ease-in-out both}
+.pls{animation:pls 2s ease-in-out infinite}
+.sUp{animation:sUp 0.4s ease both}
+input[type=time]{background:rgba(255,255,255,0.07);border:1px solid rgba(180,140,60,0.3);border-radius:8px;color:#f0e6d3;font-family:'DM Sans',sans-serif;font-size:15px;padding:10px 12px;outline:none;width:100%;}
+input[type=time]:focus{border-color:rgba(251,191,36,0.6);}
+input[type=time]::-webkit-calendar-picker-indicator{filter:invert(0.6);}
+.btn{font-family:'DM Sans',sans-serif;cursor:pointer;border:none;font-size:14px;font-weight:500;}
+.btn-gold{background:linear-gradient(135deg,#d97706,#f59e0b);color:#0a0a1a;border-radius:9px;padding:11px 24px;}
+.btn-ghost{background:transparent;border:1px solid rgba(180,140,60,0.3);color:#c4a35a;border-radius:9px;padding:10px 20px;}
+.btn-danger{background:rgba(185,28,28,0.2);border:1px solid rgba(252,165,165,0.3);color:#fca5a5;border-radius:8px;padding:7px 12px;}
+#stars-bg{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+.content{position:relative;z-index:1;}
+</style>
+</head>
+<body>
+<div id="stars-bg"></div>
+<div id="app"><div class="content" id="root">
+  <div style="display:flex;align-items:center;justify-content:center;min-height:60vh">
+    <div style="width:24px;height:24px;border-radius:50%;border:2px solid rgba(251,191,36,0.2);border-top-color:#fbbf24;animation:spn 0.8s linear infinite"></div>
+  </div>
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+<script>
+// ╔══════════════════════════════════════════════════╗
+// ║  REPLACE THESE WITH YOUR SUPABASE CREDENTIALS   ║
+const SUPABASE_URL = 'https://kdqlequxfsmkteizrqve.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_BPDsETowTXuwjtaCgca80g_fO-9_G79';
+// ╚══════════════════════════════════════════════════╝
+
+const TZ = "Australia/Melbourne";
+const PC = {
+  arif: { name:"Arif", color:"#60a5fa", bg:"rgba(96,165,250,0.12)", border:"rgba(96,165,250,0.3)" },
+  mere: { name:"Mere", color:"#fb923c", bg:"rgba(251,146,60,0.12)", border:"rgba(251,146,60,0.3)" }
+};
+const HIST=[
+  {date:"2026-04-07",arif:"06:09",mere:"06:08",winner:"mere"},
+  {date:"2026-04-08",arif:"05:45",mere:"06:02",winner:"arif"},
+  {date:"2026-04-09",arif:"07:30",mere:"12:00",winner:"arif"},
+  {date:"2026-04-10",arif:"06:42",mere:"09:42",winner:"arif"},
+  {date:"2026-04-11",arif:"07:58",mere:"10:02",winner:"arif"},
+  {date:"2026-04-12",arif:"08:10",mere:"11:53",winner:"arif"},
+  {date:"2026-04-13",arif:"06:38",mere:"13:20",winner:"arif"},
+  {date:"2026-04-14",arif:"07:40",mere:"08:12",winner:"arif"},
+  {date:"2026-04-15",arif:"07:23",mere:"11:13",winner:"arif"},
+  {date:"2026-04-16",arif:"06:20",mere:"09:57",winner:"arif"},
+  {date:"2026-04-17",arif:"07:01",mere:"09:13",winner:"arif"},
+  {date:"2026-04-18",arif:"07:30",mere:"07:38",winner:"arif"},
+  {date:"2026-04-19",arif:"06:05",mere:"12:45",winner:"arif"},
+  {date:"2026-04-20",arif:"07:23",mere:"10:58",winner:"arif"},
+  {date:"2026-04-21",arif:"06:01",mere:"08:13",winner:"arif"},
+  {date:"2026-04-22",arif:"06:43",mere:"08:05",winner:"arif"},
+  {date:"2026-04-23",arif:"06:48",mere:"07:11",winner:"arif"},
+  {date:"2026-04-24",arif:"06:46",mere:"09:00",winner:"arif"},
+  {date:"2026-04-25",arif:"08:15",mere:"10:00",winner:"arif"},
+  {date:"2026-04-26",arif:"09:03",mere:"16:49",winner:"arif"}
+];
+
+// Stars
+(function(){
+  const L=document.getElementById('stars-bg');
+  for(let i=0;i<150;i++){
+    const s=document.createElement('div'),sz=Math.random()<0.65?1:Math.random()<0.85?1.5:2.5;
+    s.style.cssText=`position:absolute;left:${Math.random()*100}%;top:${Math.random()*100}%;width:${sz}px;height:${sz}px;background:${Math.random()>0.88?'#fbbf24':'white'};border-radius:50%;opacity:${0.15+Math.random()*0.7};animation:twinkle ${1.5+Math.random()*4}s ease-in-out ${Math.random()*5}s infinite;`;
+    L.appendChild(s);
+  }
+})();
+
+let sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let player=null, gameData=null, rtChan=null;
+
+const todayStr=()=>new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+const nowMelb=()=>new Intl.DateTimeFormat("en-GB",{timeZone:TZ,hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date());
+const toMins=t=>{if(!t)return null;const[h,m]=t.split(":").map(Number);return h*60+m;};
+const fmtT=t=>{if(!t)return"—";const[h,m]=t.split(":").map(Number);return`${h%12||12}:${String(m).padStart(2,"0")} ${h>=12?"PM":"AM"}`;};
+const diff=(a,b)=>{if(!a||!b)return"";const d=Math.abs(toMins(a)-toMins(b)),h=Math.floor(d/60),min=d%60;return h===0?`${min}m`:min===0?`${h}h`:`${h}h ${min}m`;};
+const fmtDate=d=>new Date(d+"T12:00:00").toLocaleDateString("en-AU",{month:"short",day:"numeric"});
+const calcW=(a,b)=>toMins(a)<toMins(b)?"arif":"mere";
+const other=p=>p==="arif"?"mere":"arif";
+function el(tag,css,html){const e=document.createElement(tag);if(css)e.style.cssText=css;if(html!=null)e.innerHTML=html;return e;}
+function setRoot(n){const r=document.getElementById("root");r.innerHTML="";r.appendChild(n);}
+
+async function dbRead(){
+  const{data,error}=await sb.from('game_state').select('data').eq('id','sleep-mogged').maybeSingle();
+  if(error)throw error;return data?.data||null;
+}
+async function dbWrite(d){
+  const{error}=await sb.from('game_state').upsert({id:'sleep-mogged',data:d,updated_at:new Date().toISOString()});
+  if(error)throw error;
+}
+function listenRealtime(){
+  if(rtChan)sb.removeChannel(rtChan);
+  rtChan=sb.channel('sm-rt').on('postgres_changes',{event:'*',schema:'public',table:'game_state',filter:'id=eq.sleep-mogged'},(payload)=>{
+    const nd=payload.new?.data;if(!nd||!player)return;
+    const prev=gameData;gameData=nd;
+    const o=other(player);
+    if(prev?.today?.[player]&&!prev?.today?.[o]&&nd.today?.[o]){
+      if(calcW(nd.today.arif,nd.today.mere)===player)boom();render();
+    }
+  }).subscribe();
+}
+async function saveData(d){
+  gameData=d;
+  try{await dbWrite(d);}catch(e){console.error(e);}
+}
+async function loadData(){
+  const td=todayStr();
+  try{
+    let d=await dbRead();
+    if(!d){
+      const tih=HIST.find(h=>h.date===td);
+      d={history:tih?HIST.filter(h=>h.date!==td):HIST,today:{date:td,arif:tih?.arif||null,mere:tih?.mere||null}};
+      await dbWrite(d);
+    }else{
+      if(d.today?.date!==td){
+        if(d.today?.arif&&d.today?.mere)d.history=[...(d.history||[]),{...d.today,winner:calcW(d.today.arif,d.today.mere)}];
+        d.today={date:td,arif:null,mere:null};await dbWrite(d);
+      }
+      if(!d.today?.arif&&!d.today?.mere){
+        const inH=d.history?.find(h=>h.date===td);
+        if(inH){d.history=d.history.filter(h=>h.date!==td);d.today={date:td,arif:inH.arif,mere:inH.mere};await dbWrite(d);}
+      }
+    }
+    gameData=d;listenRealtime();
+  }catch(e){console.error('Load error:',e);}
+  render();
+}
+
+function boom(){
+  if(!window.confetti)return;
+  const c=["#FFD700","#60a5fa","#ffffff","#fb923c","#a78bfa"];
+  confetti({particleCount:120,spread:90,origin:{y:0.5},colors:c});
+  setTimeout(()=>confetti({particleCount:60,angle:60,spread:60,origin:{x:0},colors:c}),250);
+  setTimeout(()=>confetti({particleCount:60,angle:120,spread:60,origin:{x:1},colors:c}),500);
+}
+
+function svgStar(size,color,op){
+  const r1=size/2,r2=size/4.2,cx=size/2,cy=size/2,pts=[];
+  for(let i=0;i<10;i++){const a=(i*Math.PI/5)-Math.PI/2,r=i%2===0?r1:r2;pts.push(`${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`);}
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block;overflow:visible"><polygon points="${pts.join(' ')}" fill="${color}" opacity="${op}" style="filter:drop-shadow(0 0 3px ${color})"/></svg>`;
+}
+
+function makeTitle(){
+  const outer=el("div","position:relative;text-align:center;margin-bottom:2rem;");
+  const h1w=el("div","text-align:center;position:relative;z-index:1;");
+  const h1=el("h1","font-family:'Cinzel Decorative',serif;font-size:clamp(22px,5.2vw,40px);font-weight:900;color:#fbbf24;text-shadow:0 0 40px rgba(251,191,36,0.55),0 0 80px rgba(251,191,36,0.2);letter-spacing:3px;line-height:1.15;display:inline;white-space:nowrap;","Sleep Mogged");
+  h1w.appendChild(h1);outer.appendChild(h1w);
+  const ov=el("div","position:absolute;top:0;left:0;width:100%;height:0;overflow:visible;pointer-events:none;z-index:0;");
+  outer.appendChild(ov);
+  const PD=[{len:22,sz:7,delay:0},{len:38,sz:5,delay:0.5},{len:18,sz:6,delay:0.9},{len:32,sz:6,delay:0.3},{len:14,sz:7,delay:0.7},{len:28,sz:8,delay:0.1},{len:44,sz:6,delay:0.6},{len:12,sz:7,delay:0.35},{len:30,sz:5,delay:1.0},{len:20,sz:6,delay:0.55},{len:16,sz:7,delay:0.85}];
+  function place(){
+    if(!document.body.contains(h1))return;
+    const outerR=outer.getBoundingClientRect();if(outerR.width<20)return;
+    const tn=h1.firstChild;if(!tn||tn.nodeType!==Node.TEXT_NODE)return;
+    const text=h1.textContent;ov.innerHTML='';let pi=0,maxBot=outerR.height;
+    for(let i=0;i<text.length;i++){
+      if(text[i]===' '){continue;}
+      try{
+        const rng=document.createRange();rng.setStart(tn,i);rng.setEnd(tn,i+1);
+        const cr=rng.getBoundingClientRect();if(cr.width===0)continue;
+        const cx=cr.left-outerR.left+cr.width/2,cy=cr.bottom-outerR.top;
+        const p=PD[pi]||{len:20,sz:6,delay:0};const bot=cy+p.len+p.sz+4;if(bot>maxBot)maxBot=bot;
+        const wrap=el("div",`position:absolute;left:${cx}px;top:${cy}px;transform:translateX(-50%);`);
+        const inner=el("div",`display:flex;flex-direction:column;align-items:center;transform-origin:top center;animation:swing ${2.3+p.delay*0.55}s ease-in-out ${p.delay}s infinite;`);
+        inner.innerHTML=`<div style="width:1px;height:${p.len}px;background:linear-gradient(to bottom,rgba(251,191,36,0.8),rgba(251,191,36,0.06));"></div>${svgStar(p.sz,'#fbbf24',0.9)}`;
+        wrap.appendChild(inner);ov.appendChild(wrap);
+      }catch(_){}
+      pi++;
+    }
+    const h1bot=h1.getBoundingClientRect().bottom-outerR.top;
+    outer.style.paddingBottom=`${Math.max(maxBot-h1bot+10,8)}px`;
+  }
+  requestAnimationFrame(()=>{place();(document.fonts?.ready||Promise.resolve()).then(()=>requestAnimationFrame(place));});
+  return outer;
+}
+
+function makeHex(pid){
+  const pc=PC[pid];
+  const wrap=el("div","display:flex;flex-direction:column;align-items:center;gap:5px;");
+  const hex=el("div",`width:58px;height:66px;background:linear-gradient(135deg,${pc.bg.replace('0.12','0.28')},${pc.bg});border:1.5px solid ${pc.border};animation:floatY ${pid==='arif'?4:3.5}s ease-in-out infinite;`,"");
+  hex.style.clipPath="polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)";
+  hex.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:30px;filter:drop-shadow(0 0 5px ${pc.color})">${pid==='arif'?'🧙':'🏹'}</div>`;
+  wrap.appendChild(hex);
+  wrap.appendChild(el("span","font-family:'Rajdhani',sans-serif;font-size:11px;color:"+pc.color+";letter-spacing:1px;text-transform:uppercase;font-weight:600;",pc.name));
+  return wrap;
+}
+
+function render(){if(!player)renderSelect();else renderMain();}
+
+function renderSelect(){
+  const wrap=el("div","min-height:65vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;");
+  wrap.appendChild(makeTitle());
+  wrap.appendChild(el("p","font-size:13px;color:rgba(240,230,211,0.35);letter-spacing:2px;text-transform:uppercase;text-align:center;margin-top:-8px;","Choose your champion"));
+  const btns=el("div","display:flex;gap:14px;width:100%;max-width:340px;");
+  ["arif","mere"].forEach(p=>{
+    const pc=PC[p];
+    const b=el("button",`flex:1;padding:18px 0;border-radius:14px;border:1.5px solid ${pc.border};background:${pc.bg};color:${pc.color};cursor:pointer;transition:transform 0.12s,box-shadow 0.12s;font-family:'Cinzel Decorative',serif;font-size:18px;font-weight:700;letter-spacing:2px;`,"");
+    b.innerHTML=`<div style="font-size:32px;margin-bottom:4px">${p==='arif'?'🧙':'🏹'}</div>${pc.name}`;
+    b.onmouseenter=()=>{b.style.transform="scale(1.05)";b.style.boxShadow=`0 0 24px ${pc.color}44`;};
+    b.onmouseleave=()=>{b.style.transform="";b.style.boxShadow="";};
+    b.onclick=()=>{player=p;render();};
+    btns.appendChild(b);
+  });
+  wrap.appendChild(btns);
+  setRoot(wrap);
+}
+
+function renderMain(){
+  const o=other(player),td=gameData.today;
+  const myT=td[player],otherT=td[o],bothIn=!!(myT&&otherT);
+  const todayEntry=bothIn?[{...td,winner:calcW(td.arif,td.mere),isToday:true}]:[];
+  const allH=[...gameData.history,...todayEntry];
+  const wins={arif:allH.filter(d=>d.winner==="arif").length,mere:allH.filter(d=>d.winner==="mere").length};
+  const pc=PC[player],oc=PC[o];
+  const root=el("div","");
+  root.appendChild(makeTitle());
+  const sw=el("button","background:rgba(255,255,255,0.05);border:1px solid rgba(180,140,60,0.2);border-radius:7px;color:rgba(240,230,211,0.5);padding:5px 12px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;display:block;margin:0 0 1.25rem auto;",`${pc.name} ▾`);
+  sw.onclick=()=>{player=null;renderSelect();};root.appendChild(sw);
+  const sbW=el("div","display:grid;grid-template-columns:72px 1fr 72px;gap:10px;align-items:center;margin-bottom:1.25rem;");
+  sbW.appendChild(makeHex(player));
+  const sb2=el("div","background:rgba(255,255,255,0.04);border:1px solid rgba(180,140,60,0.22);border-radius:14px;padding:14px 10px;","");
+  sb2.innerHTML=`<div style="display:grid;grid-template-columns:1fr auto 1fr"><div style="padding:0 8px;text-align:left"><p style="margin:0 0 2px;font-size:10px;font-weight:600;color:${pc.color};letter-spacing:1.5px;text-transform:uppercase;font-family:'Rajdhani',sans-serif">${pc.name}</p><p style="margin:0;font-size:52px;line-height:1;color:${pc.color};font-family:'Rajdhani',sans-serif;font-weight:600;text-shadow:0 0 20px ${pc.color}66">${wins[player]}</p></div><div style="display:flex;align-items:center;padding:0 6px"><span style="font-size:13px;color:rgba(240,230,211,0.2);letter-spacing:2px;font-family:'Rajdhani',sans-serif">VS</span></div><div style="padding:0 8px;text-align:right"><p style="margin:0 0 2px;font-size:10px;font-weight:600;color:${oc.color};letter-spacing:1.5px;text-transform:uppercase;font-family:'Rajdhani',sans-serif">${oc.name}</p><p style="margin:0;font-size:52px;line-height:1;color:${oc.color};font-family:'Rajdhani',sans-serif;font-weight:600;text-shadow:0 0 20px ${oc.color}66">${wins[o]}</p></div></div>`;
+  sbW.appendChild(sb2);sbW.appendChild(makeHex(o));root.appendChild(sbW);
+  root.appendChild(el("p","font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(240,230,211,0.3);margin-bottom:8px;font-family:'Rajdhani',sans-serif;font-weight:600;","Today"));
+  root.appendChild(makeTodaySection(myT,otherT,bothIn,pc,oc));
+  root.appendChild(el("p","font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(240,230,211,0.3);margin:1.25rem 0 8px;font-family:'Rajdhani',sans-serif;font-weight:600;","All entries"));
+  root.appendChild(makeHistoryTable([...todayEntry,...[...gameData.history].reverse()],player,o,pc,oc));
+  setRoot(root);
+}
+
+function makeTodaySection(myT,otherT,bothIn,pc,oc){
+  const box=el("div","");box.className="sUp";const o=other(player);
+  if(bothIn){
+    const iWon=calcW(gameData.today.arif,gameData.today.mere)===player;
+    if(iWon){box.innerHTML=`<div style="background:rgba(21,128,61,0.12);border:1px solid rgba(74,222,128,0.3);border-radius:14px;padding:18px 20px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="font-size:26px">🏆</span><p style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:600;color:#4ade80;letter-spacing:3px;margin:0">YOU WON TODAY</p></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div><p style="font-size:11px;color:rgba(240,230,211,0.35);margin-bottom:2px">You</p><p style="font-size:18px;font-weight:500;color:${pc.color};margin:0">${fmtT(myT)}</p></div><p style="font-size:12px;color:#4ade80;font-weight:500;margin:0">+${diff(myT,otherT)} faster</p><div style="text-align:right"><p style="font-size:11px;color:rgba(240,230,211,0.35);margin-bottom:2px">${oc.name}</p><p style="font-size:18px;font-weight:500;color:${oc.color};margin:0">${fmtT(otherT)}</p></div></div><button class="btn btn-gold" style="width:100%" onclick="boom();renderVictory()">See full result ✨</button></div>`;}
+    else{box.innerHTML=`<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px 20px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="font-size:26px">💀</span><p style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:600;color:rgba(240,230,211,0.3);letter-spacing:3px;margin:0">MOGGED TODAY</p></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div><p style="font-size:11px;color:rgba(240,230,211,0.35);margin-bottom:2px">You</p><p style="font-size:18px;font-weight:500;color:${pc.color};margin:0">${fmtT(myT)}</p></div><p style="font-size:12px;color:#f87171;font-weight:500;margin:0">-${diff(myT,otherT)} behind</p><div style="text-align:right"><p style="font-size:11px;color:rgba(240,230,211,0.35);margin-bottom:2px">${oc.name}</p><p style="font-size:18px;font-weight:500;color:${oc.color};margin:0">${fmtT(otherT)}</p></div></div><button class="btn btn-ghost" style="width:100%;" onclick="renderDefeat()">See full result</button></div>`;}
+  }else if(myT&&!otherT){
+    box.innerHTML=`<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(180,140,60,0.15);border-radius:14px;padding:20px;text-align:center"><div class="pls" style="font-size:32px;margin-bottom:10px;line-height:1">⏳</div><p style="font-family:'Rajdhani',sans-serif;font-size:22px;letter-spacing:2px;color:#f0e6d3;margin-bottom:4px;font-weight:600">Waiting for ${PC[o].name}...</p><p style="font-size:13px;color:rgba(240,230,211,0.35)">You woke at <strong style="color:#f0e6d3">${fmtT(myT)}</strong></p></div>`;
+  }else{
+    const otherFirst=!myT&&!!otherT;
+    const inner=el("div",`background:rgba(255,255,255,0.04);border:1.5px solid ${pc.border};border-radius:14px;padding:18px 20px;`,"");
+    if(otherFirst)inner.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:8px 12px;background:${oc.bg};border-radius:8px;border:1px solid ${oc.border}"><span style="font-size:16px">⚡</span><p style="margin:0;font-size:13px;color:${oc.color};font-weight:500">${oc.name} already entered ${fmtT(otherT)}</p></div>`;
+    else inner.innerHTML=`<p style="margin:0 0 12px;font-size:14px;color:rgba(240,230,211,0.45)">What time did you wake up today?</p>`;
+    const row=document.createElement("div");row.style.cssText="display:flex;gap:8px;";
+    const inp=document.createElement("input");inp.type="time";inp.value=nowMelb();
+    const btn=el("button","padding:10px 22px;border-radius:8px;border:none;background:"+pc.color+";color:#07071a;font-family:'DM Sans',sans-serif;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap;","Submit");
+    btn.onclick=async()=>{
+      if(!inp.value)return;btn.textContent="...";btn.disabled=true;
+      const nd={...gameData,today:{...gameData.today,[player]:inp.value}};
+      await saveData(nd);
+      if(nd.today[other(player)]){if(calcW(nd.today.arif,nd.today.mere)===player)boom();render();}else render();
+    };
+    row.appendChild(inp);row.appendChild(btn);inner.appendChild(row);box.appendChild(inner);
+  }
+  return box;
+}
+
+function renderVictory(){
+  const td=gameData.today,o=other(player),pc=PC[player],oc=PC[o];
+  const allH=[...gameData.history,{...td,winner:calcW(td.arif,td.mere)}];
+  const wins={arif:allH.filter(d=>d.winner==="arif").length,mere:allH.filter(d=>d.winner==="mere").length};
+  const wrap=el("div","min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;background:linear-gradient(160deg,rgba(21,128,61,0.15),rgba(21,128,61,0.04));","");
+  const inner=document.createElement("div");inner.className="bIn";inner.style.cssText="text-align:center;width:100%;max-width:360px;";
+  inner.innerHTML=`<div style="font-size:80px;line-height:1;margin-bottom:4px;filter:drop-shadow(0 0 20px #fbbf24)">🏆</div><h1 style="font-family:'Cinzel Decorative',serif;font-size:clamp(32px,7vw,56px);font-weight:900;color:#4ade80;text-shadow:0 0 30px rgba(74,222,128,0.5);line-height:1;margin:8px 0 6px">You Mogged</h1><p style="font-family:'Rajdhani',sans-serif;font-size:20px;color:#86efac;letter-spacing:3px;margin-bottom:20px;font-weight:600">${pc.name.toUpperCase()} · ${fmtT(td[player])}</p><div style="background:rgba(21,128,61,0.18);border:1px solid rgba(74,222,128,0.3);border-radius:12px;padding:12px 24px;display:inline-block;margin-bottom:24px"><p style="margin:0;font-size:15px;color:#86efac;font-weight:500">Beat ${oc.name} by <strong>${diff(td.arif,td.mere)}</strong></p><p style="margin:4px 0 0;font-size:13px;color:rgba(134,239,172,0.6)">They woke at ${fmtT(td[o])}</p></div><div style="display:flex;gap:24px;justify-content:center;margin-bottom:28px">${[player,o].map(pid=>`<div style="text-align:center"><p style="font-family:'Rajdhani',sans-serif;font-size:52px;color:${PC[pid].color};margin:0;line-height:1;font-weight:600;text-shadow:0 0 20px ${PC[pid].color}88">${wins[pid]}</p><p style="font-size:11px;color:rgba(240,230,211,0.4);margin:2px 0 0;text-transform:uppercase;letter-spacing:1px">${PC[pid].name}</p></div>`).join("")}</div>`;
+  const btn=el("button","","Keep the streak going →");btn.className="btn btn-gold";btn.onclick=renderMain;
+  inner.appendChild(btn);wrap.appendChild(inner);setRoot(wrap);
+}
+function renderDefeat(){
+  const td=gameData.today,o=other(player),pc=PC[player],oc=PC[o];
+  const allH=[...gameData.history,{...td,winner:calcW(td.arif,td.mere)}];
+  const wins={arif:allH.filter(d=>d.winner==="arif").length,mere:allH.filter(d=>d.winner==="mere").length};
+  const wrap=el("div","min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;","");
+  const inner=document.createElement("div");inner.className="shk";inner.style.cssText="text-align:center;width:100%;max-width:360px;";
+  inner.innerHTML=`<div style="font-size:80px;line-height:1;margin-bottom:4px">💀</div><h1 style="font-family:'Cinzel Decorative',serif;font-size:clamp(32px,7vw,56px);font-weight:900;color:rgba(240,230,211,0.25);line-height:1;margin:8px 0 6px">Mogged.</h1><p style="font-family:'Rajdhani',sans-serif;font-size:20px;color:rgba(240,230,211,0.25);letter-spacing:3px;margin-bottom:20px;font-weight:600">${oc.name.toUpperCase()} WOKE AT ${fmtT(td[o])}</p><div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:12px 24px;display:inline-block;margin-bottom:24px"><p style="margin:0;font-size:15px;color:rgba(240,230,211,0.4);font-weight:500">You woke at ${fmtT(td[player])} — lost by <strong>${diff(td.arif,td.mere)}</strong></p></div><div style="display:flex;gap:24px;justify-content:center;margin-bottom:28px">${[player,o].map(pid=>`<div style="text-align:center"><p style="font-family:'Rajdhani',sans-serif;font-size:52px;color:${PC[pid].color};margin:0;line-height:1;font-weight:600;opacity:0.6">${wins[pid]}</p><p style="font-size:11px;color:rgba(240,230,211,0.3);margin:2px 0 0;text-transform:uppercase;letter-spacing:1px">${PC[pid].name}</p></div>`).join("")}</div>`;
+  const btn=el("button","","Tomorrow is another day...");btn.className="btn btn-ghost";btn.onclick=renderMain;
+  inner.appendChild(btn);wrap.appendChild(inner);setRoot(wrap);
+}
+
+function makeHistoryTable(rows,player,o,pc,oc){
+  const wrap=el("div","background:rgba(255,255,255,0.04);border:1px solid rgba(180,140,60,0.22);border-radius:14px;overflow:hidden;","");
+  const hdr=el("div","display:grid;grid-template-columns:48px 1fr 1fr 60px 36px;padding:7px 12px;border-bottom:1px solid rgba(180,140,60,0.12);background:rgba(255,255,255,0.03);gap:4px;","");
+  ["Date",PC.arif.name,PC.mere.name,"Result",""].forEach((h,i)=>{hdr.appendChild(el("span","font-size:10px;font-family:'Rajdhani',sans-serif;font-weight:600;color:rgba(240,230,211,0.28);text-transform:uppercase;letter-spacing:1px;text-align:"+(i>=3?"right":"left")+";",h));});
+  wrap.appendChild(hdr);
+  if(!rows.length){wrap.appendChild(el("div","padding:20px;text-align:center;font-size:13px;color:rgba(240,230,211,0.3);","No entries yet!"));return wrap;}
+  rows.forEach((row,i)=>{const rEl=el("div","");rEl.setAttribute("data-date",row.date);drawNormal(rEl,row,i,rows.length,player,o,pc,oc);wrap.appendChild(rEl);});
+  return wrap;
+}
+function drawNormal(rEl,row,i,total,pl,o,pc,oc){
+  rEl.innerHTML="";const iWon=row.winner===pl,isLast=i===total-1;
+  const div=el("div",`display:grid;grid-template-columns:48px 1fr 1fr 60px 36px;align-items:center;padding:9px 12px;border-bottom:${isLast?"none":"1px solid rgba(180,140,60,0.08)"};background:${row.isToday?"rgba(251,191,36,0.04)":(i%2===0?"rgba(255,255,255,0.015)":"transparent")};gap:4px;`,"");
+  const dc=el("div","","");dc.innerHTML=`<span style="font-size:12px;color:rgba(240,230,211,0.4)">${fmtDate(row.date)}</span>${row.isToday?`<span style="display:block;font-size:9px;color:#fbbf24;font-weight:500;text-transform:uppercase">Today</span>`:""}`;
+  div.appendChild(dc);div.appendChild(el("span","font-size:13px;color:"+PC.arif.color+";font-weight:500;",fmtT(row.arif)));div.appendChild(el("span","font-size:13px;color:"+PC.mere.color+";font-weight:500;",fmtT(row.mere)));
+  const bdg=el("div","text-align:right;","");bdg.innerHTML=`<span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px;font-family:'Rajdhani',sans-serif;background:${iWon?pc.bg:oc.bg};color:${iWon?pc.color:oc.color}">${iWon?"W":"L"} ${diff(row.arif,row.mere)}</span>`;
+  div.appendChild(bdg);
+  const eb=el("button","background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px;opacity:0.4;","✏️");eb.onclick=()=>drawEdit(rEl,row,i,total,pl,o,pc,oc);div.appendChild(eb);rEl.appendChild(div);
+}
+function drawEdit(rEl,row,i,total,pl,o,pc,oc){
+  rEl.innerHTML="";const isLast=i===total-1;
+  const wrap=el("div",`padding:14px 12px;border-bottom:${isLast?"none":"1px solid rgba(180,140,60,0.08)"};background:rgba(255,255,255,0.04);`,"");
+  wrap.innerHTML=`<p style="margin:0 0 10px;font-size:12px;font-weight:500;color:rgba(240,230,211,0.35);font-family:'Rajdhani',sans-serif;">Editing ${fmtDate(row.date)}</p>`;
+  const grid=el("div","display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;","");
+  const aW=el("div","","");aW.innerHTML=`<label style="font-size:10px;color:${PC.arif.color};font-weight:600;display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:1px;font-family:'Rajdhani',sans-serif">Arif</label>`;
+  const mW=el("div","","");mW.innerHTML=`<label style="font-size:10px;color:${PC.mere.color};font-weight:600;display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:1px;font-family:'Rajdhani',sans-serif">Mere</label>`;
+  const aI=document.createElement("input");aI.type="time";aI.value=row.arif||"";
+  const mI=document.createElement("input");mI.type="time";mI.value=row.mere||"";
+  aW.appendChild(aI);mW.appendChild(mI);grid.appendChild(aW);grid.appendChild(mW);wrap.appendChild(grid);
+  const btns=el("div","display:flex;gap:7px;","");
+  const sv=el("button","","Save");sv.className="btn btn-gold";sv.style.flex="1";
+  const cn=el("button","","Cancel");cn.className="btn btn-ghost";cn.style.flex="1";
+  const dl=el("button","","Delete");dl.className="btn btn-danger";
+  sv.onclick=async()=>{
+    if(!aI.value||!mI.value)return;sv.textContent="Saving...";sv.disabled=true;
+    if(row.date===gameData.today.date)gameData.today={...gameData.today,arif:aI.value,mere:mI.value};
+    else gameData.history=gameData.history.map(r=>r.date===row.date?{...r,arif:aI.value,mere:mI.value,winner:calcW(aI.value,mI.value)}:r);
+    await saveData(gameData);renderMain();
+  };
+  cn.onclick=()=>drawNormal(rEl,row,i,total,pl,o,pc,oc);
+  dl.onclick=()=>{
+    const conf=el("div","margin-top:8px;padding:10px 12px;background:rgba(185,28,28,0.15);border-radius:7px;border:1px solid rgba(252,165,165,0.2);","");
+    conf.innerHTML=`<p style="margin:0 0 8px;font-size:13px;color:#fca5a5;font-weight:500">Delete this entry?</p>`;
+    const cr=el("div","display:flex;gap:7px;","");
+    const y=el("button","","Yes, delete");y.className="btn btn-danger";y.style.flex="1";
+    const n=el("button","","No");n.className="btn btn-ghost";n.style.flex="1";
+    y.onclick=async()=>{
+      if(row.date===gameData.today.date)gameData.today={date:gameData.today.date,arif:null,mere:null};
+      else gameData.history=gameData.history.filter(r=>r.date!==row.date);
+      await saveData(gameData);renderMain();
+    };
+    n.onclick=()=>conf.remove();cr.appendChild(y);cr.appendChild(n);conf.appendChild(cr);wrap.appendChild(conf);
+  };
+  btns.appendChild(sv);btns.appendChild(cn);btns.appendChild(dl);wrap.appendChild(btns);rEl.appendChild(wrap);
+}
+
+loadData();
+</script>
+</body>
+</html>
